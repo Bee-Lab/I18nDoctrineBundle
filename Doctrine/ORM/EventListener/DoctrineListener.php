@@ -42,29 +42,27 @@ class DoctrineListener extends BaseDoctrineListener
             ));
 
             // Unique constraint
+            $uniqueConstraints = isset($classMetadata->table['uniqueConstraints']) ? $classMetadata->table['uniqueConstraints'] : array();
             $name = $classMetadata->getTableName() . '_unique_translation';
             if (!$this->hasUniqueTranslationConstraint($classMetadata, $name)) {
-                $classMetadata->setPrimaryTable(array(
-                    'uniqueConstraints' => array(array(
-                        'name' => $name,
-                        'columns' => array('translatable_id', 'locale')
-                    )),
-                ));
+                $uniqueConstraints[$name] = array(
+                    'name' => $name,
+                    'columns' => array('translatable_id', 'locale')
+                );
             }
+            $classMetadata->setPrimaryTable(array(
+                'uniqueConstraints' => $uniqueConstraints,
+            ));
         }
     }
 
     protected function hasUniqueTranslationConstraint(ClassMetadata $classMetadata, $name)
     {
         if (!isset($classMetadata->table['uniqueConstraints'])) {
-            return;
+            return false;
         }
 
-        $constraints = array_filter($classMetadata->table['uniqueConstraints'], function($constraint) use ($name) {
-            return $name === $constraint['name'];
-        });
-
-        return count($constraints);
+        return isset($classMetadata->table['uniqueConstraints'][$name]);
     }
 
     public function getSubscribedEvents()
